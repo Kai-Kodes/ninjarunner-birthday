@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ninja Path — A Journey Through Words</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #5fb8f5;
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #game-container { position: relative; }
+
+    /* ─── SCROLL POPUP OVERLAY (in-game messages) ─── */
+    #scroll-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 5, 2, 0.6);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #scroll-popup {
+      position: relative;
+      width: min(680px, 90vw);
+      aspect-ratio: 2 / 1;
+      opacity: 0;
+      transform: scale(0.82);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+
+    #scroll-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    #scroll-content {
+      position: absolute;
+      inset: 20% 12% 18%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .scroll-title {
+      font-size: 0.42rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #5a3205;
+      margin-bottom: 10px;
+      opacity: 0.75;
+    }
+
+    .scroll-divider {
+      width: 50%;
+      height: 1px;
+      background: linear-gradient(to right, transparent, #9a6020, transparent);
+      margin: 0 auto 12px;
+    }
+
+    #scroll-message {
+      font-size: clamp(0.42rem, 0.9vw, 0.58rem);
+      line-height: 2;
+      color: #2e1a06;
+      text-align: center;
+      letter-spacing: 0.04em;
+      margin-bottom: 0;
+      min-height: 2.5em;
+    }
+
+    #scroll-cursor {
+      display: inline-block;
+      width: 1px;
+      height: 0.9em;
+      background: #5a3205;
+      margin-left: 1px;
+      vertical-align: text-bottom;
+      opacity: 0;
+    }
+    #scroll-cursor.blinking {
+      opacity: 1;
+      animation: blink-cursor 0.65s step-end infinite;
+    }
+
+    #scroll-close-btn {
+      display: block;
+      pointer-events: auto;
+      margin-top: 12px;
+      padding: 8px 24px;
+      background: linear-gradient(135deg, #c49a3a 0%, #a8781e 100%);
+      border: 1px solid #7a5010;
+      border-radius: 3px;
+      color: #fff8e8;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.45rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(140, 90, 10, 0.4);
+      transition: all 0.2s ease;
+      opacity: 0;
+      pointer-events: none;
+    }
+    #scroll-close-btn.btn-ready {
+      opacity: 1;
+      pointer-events: auto;
+      animation: fadeInUp 0.3s ease forwards;
+    }
+    #scroll-close-btn:hover {
+      background: linear-gradient(135deg, #d4aa44 0%, #b88828 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(160, 110, 10, 0.5);
+    }
+    #scroll-close-btn:active { transform: translateY(0); }
+
+    /* ─── END SCENE OVERLAY ─── */
+    #end-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 5, 15, 0.0);
+      z-index: 200;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      animation: fadeInEnd 2.5s ease forwards;
+    }
+    #end-overlay.active { display: flex; }
+
+    #end-text-container {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    /* Each text line fades+rises in sequence */
+    .end-line {
+      display: block;
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0);
+      line-height: 1.5;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+      animation: revealLine 1.2s ease forwards;
+      white-space: nowrap;
+    }
+    .end-line:nth-child(1) { animation-delay: 1.2s; }
+    .end-line:nth-child(2) { animation-delay: 2.8s; }
+    .end-line:nth-child(3) {
+      animation-delay: 4.4s;
+      font-size: 1.3rem;
+      margin-bottom: 28px;
+    }
+
+    /* Cake gif — appears below text as its own big element */
+    #end-cake {
+      width: 160px;
+      height: 160px;
+      object-fit: contain;
+      opacity: 0;
+      animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 6s forwards;
+      margin-bottom: 36px;
+    }
+
+    #open-letter-btn {
+      display: block;
+      padding: 14px 44px;
+      background: transparent;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: 2px;
+      color: rgba(255, 255, 255, 0.9);
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.5rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      opacity: 0;
+      animation: fadeIn 0.8s ease 7s forwards;
+      transition: all 0.3s ease;
+    }
+    #open-letter-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 0 30px rgba(255, 255, 255, 0.15);
+    }
+
+    /* ─── FINAL LETTER OVERLAY (scroll-based) ─── */
+    #letter-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 5, 2, 0.72);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 300;
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 0.6s ease;
+    }
+    #letter-overlay.active { display: flex; }
+
+    #letter-popup {
+      position: relative;
+      width: min(1500px, 96vw);   /* Hugely expanded to ensure all text fits comfortably */
+      height: min(880px, 92vh);   /* Much taller layout */
+      /* no aspect-ratio — explicit height lets parchment be taller */
+      opacity: 0;
+      transform: scale(0.82);
+      transition: opacity 0.5s ease, transform 0.5s ease; /* slower fade in */
+    }
+
+    #letter-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    /* Letter text sits inside the scroll parchment */
+    #letter-scroll-content {
+      position: absolute;
+      inset: 12% 8% 10%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;     /* vertically centre content */
+      gap: 12px;
+      overflow-y: auto;
+      scrollbar-width: none;
+      pointer-events: auto;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    #letter-scroll-content::-webkit-scrollbar { display: none; }
+
+    .letter-title {
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #5a3205;
+      margin-bottom: 12px;
+      opacity: 0.8;
+      flex-shrink: 0;
+    }
+
+    .letter-divider {
+      width: 60%;
+      height: 1px;
+      background: linear-gradient(to right, transparent, #9a6020, transparent);
+      margin: 0 auto 16px;
+      flex-shrink: 0;
+    }
+
+    .letter-body {
+      font-size: clamp(0.55rem, 1vw, 0.75rem);
+      line-height: 2.2;
+      color: #2e1a06;
+      text-align: center;
+      letter-spacing: 0.03em;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+
+    .letter-sign {
+      font-size: clamp(0.5rem, 0.9vw, 0.65rem);
+      color: #7a4a10;
+      margin-top: 10px;
+      margin-bottom: 8px;
+      opacity: 0.85;
+      flex-shrink: 0;
+    }
+
+    #replay-btn {
+      margin-top: 12px;
+      display: inline-block;
+      padding: 12px 32px;
+      background: linear-gradient(135deg, #c49a3a 0%, #a8781e 100%);
+      border: 1px solid #7a5010;
+      border-radius: 3px;
+      color: #fff8e8;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(140, 90, 10, 0.4);
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      pointer-events: auto;
+    }
+    #replay-btn:hover {
+      background: linear-gradient(135deg, #d4aa44 0%, #b88828 100%);
+      transform: translateY(-1px);
+    }
+
+    /* ─── COIN COUNTER HUD ─── */
+    #coin-hud {
+      position: fixed;
+      top: 16px;
+      left: 18px;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: rgba(255, 255, 255, 0.22);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1.5px solid rgba(220, 170, 40, 0.55);
+      border-radius: 24px;
+      padding: 8px 18px 8px 13px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.4);
+    }
+    #coin-hud .coin-icon { font-size: 17px; line-height: 1; }
+    #coin-count {
+      font-size: 0.6rem;
+      color: #5a3a00;
+      letter-spacing: 0.06em;
+      min-width: 22px;
+    }
+
+    /* ─── KEYFRAME ANIMATIONS ─── */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeInEnd {
+      0%   { background: rgba(5, 5, 15, 0); }
+      40%  { background: rgba(5, 5, 15, 0.5); }
+      100% { background: rgba(5, 5, 15, 0.92); }
+    }
+    @keyframes revealLine {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); color: #ffffff; }
+    }
+    @keyframes popIn {
+      0%   { opacity: 0; transform: scale(0.4) rotate(-8deg); }
+      70%  { transform: scale(1.1) rotate(3deg); }
+      100% { opacity: 1; transform: scale(1) rotate(0deg); }
+    }
+    @keyframes blink-cursor {
+      50% { opacity: 0; }
+    }
+
+    /* nth-child(3) starts transparent — revealLine overrides to white */
+    .end-line:nth-child(3) { color: rgba(255, 255, 255, 0); }
+  </style>
+</head>
+<body>
+
+<!-- ─── COIN HUD ─── -->
+<div id="coin-hud">
+  <span class="coin-icon">🪙</span>
+  <span id="coin-count">0</span>
+</div>
+
+<!-- ─── IN-GAME SCROLL POPUP ─── -->
+<div id="scroll-overlay">
+  <div id="scroll-popup">
+    <canvas id="scroll-canvas"></canvas>
+    <div id="scroll-content">
+      <div class="scroll-title">A message for you</div>
+      <div class="scroll-divider"></div>
+      <p id="scroll-message"><span id="scroll-cursor"></span></p>
+      <button id="scroll-close-btn">Continue ›</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── END SCENE OVERLAY ─── -->
+<div id="end-overlay">
+  <div id="end-text-container">
+    <span class="end-line">You made it!</span>
+    <span class="end-line">Like you always do...</span>
+    <span class="end-line">Happy Birthday</span>
+  </div>
+  <!-- Cake gif appears below text as a big separate element -->
+  <img id="end-cake" src="backs/cake.gif" alt="🎂">
+  <button id="open-letter-btn">Open Final Letter</button>
+</div>
+
+<!-- ─── FINAL LETTER OVERLAY (scroll-based) ─── -->
+<div id="letter-overlay">
+  <div id="letter-popup">
+    <canvas id="letter-canvas"></canvas>
+    <div id="letter-scroll-content">
+      <div class="letter-title">— A letter for you —</div>
+      <div class="letter-divider"></div>
+      <p class="letter-body">
+        There's something rare about a person who makes the world feel softer
+        just by being in it. That's you. Not because you try to — but because
+        that's just who you are at your core.
+      </p>
+      <p class="letter-body">
+        You carry things quietly, show up fully, and give more than most people
+        even notice. I notice. I've always noticed.
+      </p>
+      <p class="letter-body">
+        Today is a reminder that the universe did something wonderful when it made you.
+        I'm grateful — every single day — that you exist in mine.
+      </p>
+      <p class="letter-sign">Happy Birthday. Here's to you. ✨</p>
+      <button id="replay-btn" onclick="location.reload()">↺ Play Again</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── PHASER GAME ─── -->
+<div id="game-container"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  makeScrollAnimator(canvasId, popupId, contentId, fps)
+//  Generic factory — drives any scroll popup using the spritesheet.
+//  Returns { open(onReady), close(onDone) }
+// ══════════════════════════════════════════════════════════════
+function makeScrollAnimator(canvasEl, popupEl, contentEl, fps = 30) {
+  const SHEET_SRC  = 'backs/scroll_spritesheet.png';
+  const FRAME_W    = 1024;
+  const FRAME_H    = 512;
+  const STOP_FRAME = 24;
+  const FRAME_MS   = 1000 / fps;
+
+  let cachedW = 0, cachedH = 0;
+  const ctx = canvasEl.getContext('2d');
+  let sheet = null;
+  let rafId = null;
+
+  const img = new Image();
+  img.src = SHEET_SRC;
+  img.onload = () => { sheet = img; };
+
+  function resizeCanvas() {
+    cachedW = popupEl.offsetWidth  || 680;
+    cachedH = popupEl.offsetHeight || 340;
+    canvasEl.width  = cachedW;
+    canvasEl.height = cachedH;
+  }
+
+  function drawFrame(frame) {
+    if (!sheet) return;
+    ctx.clearRect(0, 0, cachedW, cachedH);
+    ctx.drawImage(sheet, frame * FRAME_W, 0, FRAME_W, FRAME_H, 0, 0, cachedW, cachedH);
+  }
+
+  function animate(fromFrame, toFrame, onDone) {
+    if (rafId) cancelAnimationFrame(rafId);
+    let current = fromFrame;
+    const step  = toFrame > fromFrame ? 1 : -1;
+    let lastTime = null;
+
+    function tick(ts) {
+      if (!lastTime) lastTime = ts;
+      if (ts - lastTime >= FRAME_MS) {
+        drawFrame(current);
+        lastTime = ts;
+        if (current === toFrame) {
+          rafId = null;
+          if (onDone) onDone();
+          return;
+        }
+        current += step;
+      }
+      rafId = requestAnimationFrame(tick);
+    }
+    rafId = requestAnimationFrame(tick);
+  }
+
+  return {
+    open(onReady) {
+      popupEl.style.opacity   = '0';
+      popupEl.style.transform = 'scale(0.82)';
+      if (contentEl) contentEl.style.opacity = '0';
+
+      resizeCanvas();
+      drawFrame(0);
+
+      requestAnimationFrame(() => {
+        popupEl.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        popupEl.style.opacity    = '1';
+        popupEl.style.transform  = 'scale(1)';
+      });
+
+      animate(0, STOP_FRAME, () => {
+        if (contentEl) {
+          contentEl.style.transition = 'opacity 0.5s ease';
+          contentEl.style.opacity    = '1';
+        }
+        if (onReady) onReady();
+      });
+    },
+
+    close(onDone) {
+      if (contentEl) contentEl.style.opacity = '0';
+
+      animate(STOP_FRAME, 0, () => {
+        popupEl.style.transition = 'opacity 0.12s ease';
+        popupEl.style.opacity    = '0';
+        setTimeout(() => { if (onDone) onDone(); }, 130);
+      });
+    }
+  };
+}
+
+// ── In-game scroll animator (in-world collectible popups) ──────
+window.scrollAnim = (() => {
+  const overlay  = document.getElementById('scroll-overlay');
+  const popup    = document.getElementById('scroll-popup');
+  const canvas   = document.getElementById('scroll-canvas');
+  const content  = document.getElementById('scroll-content');
+  const msgEl    = document.getElementById('scroll-message');
+  const cursorEl = document.getElementById('scroll-cursor');
+
+  const anim = makeScrollAnimator(canvas, popup, content);
+
+  return {
+    open(msg, onTextReady) {
+      msgEl.textContent = '';
+      msgEl.appendChild(cursorEl);
+      cursorEl.classList.add('blinking');
+
+      overlay.style.display = 'flex';
+
+      anim.open(() => {
+        cursorEl.classList.add('blinking');
+        if (onTextReady) onTextReady();
+      });
+    },
+
+    close(onDone) {
+      cursorEl.classList.remove('blinking');
+      anim.close(() => {
+        overlay.style.display = 'none';
+        if (onDone) onDone();
+      });
+    }
+  };
+})();
+
+// ── Final letter scroll animator ───────────────────────────────
+window.letterAnim = (() => {
+  const overlay = document.getElementById('letter-overlay');
+  const popup   = document.getElementById('letter-popup');
+  const canvas  = document.getElementById('letter-canvas');
+  const content = document.getElementById('letter-scroll-content');
+
+  // Use 18 FPS instead of 30 for a weighty, cinematic 1.3-second unroll
+  const anim = makeScrollAnimator(canvas, popup, content, 18);
+
+  return {
+    open() {
+      overlay.style.display = 'flex';
+      anim.open();
+    }
+  };
+})();
+
+// ── Wire "Open Final Letter" button ───────────────────────────
+document.getElementById('open-letter-btn').addEventListener('click', () => {
+  document.getElementById('end-overlay').style.display = 'none';
+  window.letterAnim.open();
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.87.0/dist/phaser.min.js"></script>
+<script src="game.js"></script>
+
+</body>
+</html>
