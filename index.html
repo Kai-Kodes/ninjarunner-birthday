@@ -376,9 +376,84 @@
 
     /* nth-child(3) starts transparent — revealLine overrides to white */
     .end-line:nth-child(3) { color: rgba(255, 255, 255, 0); }
+    /* ─── MOBILE CONTROLS & WARNING ─── */
+    #rotate-warning {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(10, 5, 2, 0.95);
+      z-index: 9999;
+      color: #fff;
+      flex-direction: column;
+      justify-content: center; align-items: center;
+      text-align: center;
+      font-size: 0.7rem;
+      line-height: 1.8;
+      letter-spacing: 0.05em;
+    }
+    #rotate-warning span { font-size: 2rem; margin-top: 20px; }
+
+    @media screen and (orientation: portrait) {
+      #rotate-warning { display: flex; }
+    }
+
+    #mobile-controls {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      left: 0; right: 0;
+      padding: 0 20px;
+      z-index: 80;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+    @media (hover: none) and (pointer: coarse) {
+      #mobile-controls { display: flex; }
+    }
+
+    #mobile-controls .controls-left { display: flex; gap: 15px; }
+    #mobile-controls button {
+      pointer-events: auto;
+      background: rgba(255, 255, 255, 0.15);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      color: rgba(255, 255, 255, 0.8);
+      width: 65px; height: 65px;
+      border-radius: 50%;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 1.2rem;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    #mobile-controls button:active {
+      background: rgba(255, 255, 255, 0.35);
+      border-color: rgba(255, 255, 255, 0.6);
+      color: #fff;
+    }
   </style>
 </head>
 <body>
+
+<!-- ─── MOBILE ROTATE WARNING ─── -->
+<div id="rotate-warning">
+  Rotate your phone to play
+  <span>📱🔄</span>
+</div>
+
+<!-- ─── MOBILE CONTROLS ─── -->
+<div id="mobile-controls">
+  <div class="controls-left">
+    <button id="btn-left">◀</button>
+    <button id="btn-right">▶</button>
+  </div>
+  <div class="controls-right">
+    <button id="btn-jump">▲</button>
+  </div>
+</div>
 
 <!-- ─── COIN HUD ─── -->
 <div id="coin-hud">
@@ -592,6 +667,27 @@ document.getElementById('open-letter-btn').addEventListener('click', () => {
   document.getElementById('end-overlay').style.display = 'none';
   window.letterAnim.open();
 });
+
+// ── Wire Mobile Controls ──────────────────────────────────────
+window.mobileInput = { left: false, right: false, up: false };
+
+function bindMobileBtn(id, key) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  const press = (e) => { e.preventDefault(); window.mobileInput[key] = true; };
+  const release = (e) => { e.preventDefault(); window.mobileInput[key] = false; };
+  btn.addEventListener('touchstart', press, { passive: false });
+  btn.addEventListener('touchend', release, { passive: false });
+  btn.addEventListener('touchcancel', release, { passive: false });
+  // Fallbacks for testing clicking on desktop if forced to show
+  btn.addEventListener('mousedown', press);
+  btn.addEventListener('mouseup', release);
+  btn.addEventListener('mouseleave', release);
+}
+
+bindMobileBtn('btn-left', 'left');
+bindMobileBtn('btn-right', 'right');
+bindMobileBtn('btn-jump', 'up');
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.87.0/dist/phaser.min.js"></script>

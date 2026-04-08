@@ -121,10 +121,17 @@ class GameScene extends Phaser.Scene {
     if (this.gameOver || this.scrollOpen) return;
 
     const p        = this.player;
-    const goLeft   = this.cursors.left.isDown   || this.wasd.left.isDown;
-    const goRight  = this.cursors.right.isDown  || this.wasd.right.isDown;
-    const goJump   = Phaser.Input.Keyboard.JustDown(this.cursors.up) ||
+    const mobile   = window.mobileInput || {};
+    const goLeft   = this.cursors.left.isDown   || this.wasd.left.isDown   || mobile.left;
+    const goRight  = this.cursors.right.isDown  || this.wasd.right.isDown  || mobile.right;
+    
+    let goJump     = Phaser.Input.Keyboard.JustDown(this.cursors.up) ||
                      Phaser.Input.Keyboard.JustDown(this.wasd.up);
+    
+    // Simulate 'JustDown' for mobile jump to avoid auto-bouncing if held
+    if (mobile.up && !this._mobileUpLast) goJump = true;
+    this._mobileUpLast = mobile.up;
+
     const onGround = p.body.blocked.down;
 
     // Horizontal movement with smooth deceleration
