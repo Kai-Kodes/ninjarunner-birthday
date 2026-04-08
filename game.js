@@ -664,8 +664,23 @@ const config = {
 
 const game = new Phaser.Game(config);
 
-// Keep aspect ratio perfectly aligned if the user resizes their browser window
+let initialPortrait = window.innerHeight > window.innerWidth;
+
+// Keep aspect ratio perfectly aligned if the user resizes their browser window.
+// On mobile, rotating the device can heavily mangle the Phaser FIT canvas, 
+// so we cleanly reload the page if the orientation flips.
 window.addEventListener('resize', () => {
-  VIEW_WIDTH = getDynamicWidth();
-  game.scale.resize(VIEW_WIDTH, VIEW_HEIGHT);
+  setTimeout(() => {
+    const currentPortrait = window.innerHeight > window.innerWidth;
+    if (initialPortrait !== currentPortrait) {
+      // Device was rotated! Clean reload guarantees perfect fullscreen mapping.
+      location.reload();
+      return;
+    }
+    
+    // For standard desktop window resizing:
+    VIEW_WIDTH = getDynamicWidth();
+    game.scale.setGameSize(VIEW_WIDTH, VIEW_HEIGHT);
+    game.scale.refresh();
+  }, 200); // Small delay lets mobile browsers settle their new innerWidth/innerHeight
 });
