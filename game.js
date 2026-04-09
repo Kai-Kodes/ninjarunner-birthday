@@ -58,6 +58,10 @@ class GameScene extends Phaser.Scene {
 
     // Collectible scroll sprite
     this.load.image('scroll-sprite',   'backs/scroll_closed.png');
+
+    // Final ending assets
+    this.load.spritesheet('gate', 'backs/Gate.png', { frameWidth: 207, frameHeight: 284 });
+    this.load.image('sign', 'backs/Sign.png');
   }
 
   // ── CREATE ──────────────────────────────────────────────────────
@@ -561,54 +565,39 @@ class GameScene extends Phaser.Scene {
   // ── END TRIGGER ───────────────────────────────────────────────
   _placeEndTrigger(W, H) {
     // The final platform sits at y = H - 180, top surface at H - 180.
-    // Trigger starts from the platform top — player must jump up to reach it.
-    const PLAT_TOP   = H - 180;
-    const zoneH      = PLAT_TOP;           // from y=0 to platform top
-    const zoneY      = zoneH / 2;          // static body centre
+    const PLAT_TOP = H - 180;
+    
+    // Gate Placement (frame 0 = closed)
+    this.endGate = this.physics.add.staticSprite(W - 120, PLAT_TOP, 'gate', 0)
+      .setOrigin(0.5, 1)      // Rest exactly on the platform
+      .setScale(0.6)          // Sane scale compared to the player 
+      .setDepth(6)
+      .setFlipX(true);        // Flip so the gate swings towards the left/player
 
-    // Golden beacon visual (purely cosmetic)
-    this._buildEndBeacon(W, H, PLAT_TOP);
+    // Sign Placement (to the left of the gate)
+    const sign = this.add.image(W - 300, PLAT_TOP, 'sign')
+      .setOrigin(0.5, 1)
+      .setScale(0.12)         // Sign image is huge (532 h), scale down to ~64px
+      .setDepth(5);
+      
+    // Sign Text
+    this.add.text(sign.x, sign.y - 72, 'Surprise for you', {
+      fontSize: '8px', 
+      color: '#fff8e8',
+      fontFamily: '"Press Start 2P", sans-serif',
+      shadow: { blur: 2, color: '#000000', fill: true }
+    }).setOrigin(0.5, 1).setDepth(7);
 
-    // Invisible trigger zone the player walks into
+    // Invisible trigger zone the player walks into (just in front of the gate)
     const gfx = this.add.graphics();
     gfx.fillStyle(0xffd700, 0.001);
-    gfx.fillRect(0, 0, 100, zoneH);
-    gfx.generateTexture('end_zone', 100, zoneH);
+    gfx.fillRect(0, 0, 100, PLAT_TOP);
+    gfx.generateTexture('end_zone', 100, PLAT_TOP);
     gfx.destroy();
 
-    const trigger = this.physics.add.staticImage(W - 100, zoneY, 'end_zone');
+    const trigger = this.physics.add.staticImage(this.endGate.x - 40, PLAT_TOP / 2, 'end_zone');
     trigger.setAlpha(0).setDepth(1);
     this.endTrigger.add(trigger, true);
-  }
-
-  _buildEndBeacon(W, H, platTop) {
-    // Vertical light column — only from the platform top upward
-    const col = this.add.graphics().setDepth(6);
-    col.fillStyle(0xffd700, 0.07);
-    col.fillRect(W - 130, 0, 100, platTop);
-    col.fillStyle(0xffe44a, 0.16);
-    col.fillRect(W - 100, 0, 30, platTop);
-
-    this.tweens.add({
-      targets: col, alpha: 0.45,
-      duration: 1400, ease: 'Sine.easeInOut', yoyo: true, repeat: -1
-    });
-
-    // Star / sigil at top
-    const star = this.add.text(W - 84, 55, '✦', {
-      fontSize: '22px', color: '#ffd700'
-    }).setOrigin(0.5).setDepth(7).setAlpha(0.9);
-
-    this.tweens.add({
-      targets: star, y: 45, alpha: 0.4,
-      duration: 1100, ease: 'Sine.easeInOut', yoyo: true, repeat: -1
-    });
-
-    // "Goal" label
-    this.add.text(W - 84, 85, 'GOAL', {
-      fontSize: '10px', color: '#ffd700',
-      fontFamily: '"Press Start 2P", sans-serif', letterSpacing: 2, alpha: 0.7
-    }).setOrigin(0.5).setDepth(7).setAlpha(0.6);
   }
 
   // ── ENDING ────────────────────────────────────────────────────
@@ -617,8 +606,11 @@ class GameScene extends Phaser.Scene {
     this.gameOver = true;
     player.setVelocity(0, 0);
     this.physics.pause();
+    
+    // Open the gate (switch to frame 1)
+    if (this.endGate) this.endGate.setFrame(1);
 
-    this.time.delayedCall(500, () => {
+    this.time.delayedCall(700, () => {
       document.getElementById('end-overlay').classList.add('active');
     });
   }
