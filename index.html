@@ -182,13 +182,13 @@
       letter-spacing: 0.05em;
       white-space: nowrap;
       opacity: 0;
-      transform: translateX(15vw);
+      transform: translateX(50px);
     }
     #line1 { animation: slideFromRight 3.5s ease-out 1.0s forwards; margin-bottom: 16px; }
     #line2 { animation: slideFromRight 3.5s ease-out 4.5s forwards; margin-bottom: 50px; }
 
     @keyframes slideFromRight {
-      0%   { opacity: 0; transform: translateX(15vw); }
+      0%   { opacity: 0; transform: translateX(50px); }
       30%  { opacity: 1; }
       100% { opacity: 1; transform: translateX(0); }
     }
@@ -756,39 +756,51 @@ bindMobileBtn('btn-jump', 'up');
 const pContainer = document.getElementById('party-particles');
 const colors = ['#ff2a2a', '#2aff2a', '#ffea2a', '#2a2aff', '#ff00ff', '#00ffff'];
 
-// 5 explosion centers across the screen breadth
-const bursts = [
-  { x: 10, y: 100 }, { x: 30, y: 100 }, { x: 50, y: 100 }, { x: 70, y: 100 }, { x: 90, y: 100 }
-];
-
-bursts.forEach((burst) => {
-  for (let i = 0; i < 30; i++) {
-    const p = document.createElement('div');
-    p.className = 'party-particle';
-    const angle = (Math.random() * 180) * (Math.PI / 180) + Math.PI; 
-    const velocity = 80 + Math.random() * 250;
-    
-    p.style.left = `calc(${burst.x}vw + ${(Math.random()*40-20)}px)`;
-    p.style.top = burst.y + 'vh';
-    
-    // Create organic parabolic outward burst matching 16bit style
-    const tx = Math.cos(angle) * velocity * 2.5;
-    const ty = Math.sin(angle) * velocity * 2.5 + 400; // gravity drops it downward
-    
-    p.style.setProperty('--tx', tx + 'px');
-    p.style.setProperty('--ty', ty + 'px');
-    p.style.setProperty('--w', (4 + Math.random()*6) + 'px');
-    p.style.setProperty('--h', (4 + Math.random()*6) + 'px');
-    p.style.setProperty('--c', colors[Math.floor(Math.random() * colors.length)]);
-    p.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
-    
-    // Starts exactly as HAPPY BIRTHDAY transitions in
-    const delay = (9.0 + Math.random() * 0.2).toFixed(2);
-    p.style.animationDelay = `${delay}s`;
-    
-    pContainer.appendChild(p);
+// Spawn 400 particles perfectly filling the edges
+for (let i = 0; i < 400; i++) {
+  const p = document.createElement('div');
+  p.className = 'party-particle';
+  
+  // Decide what edge to spawn on (0: top, 1: right, 2: bottom, 3: left)
+  const edge = Math.floor(Math.random() * 4);
+  let startX, startY, angleBase;
+  
+  if (edge === 0) { // Top
+    startX = Math.random() * 100; startY = -5;
+    angleBase = Math.PI / 2; // Point down
+  } else if (edge === 1) { // Right
+    startX = 105; startY = Math.random() * 100;
+    angleBase = Math.PI; // Point left
+  } else if (edge === 2) { // Bottom
+    startX = Math.random() * 100; startY = 105;
+    angleBase = -Math.PI / 2; // Point up
+  } else { // Left
+    startX = -5; startY = Math.random() * 100;
+    angleBase = 0; // Point right
   }
-});
+  
+  // Spread burst across 180 inward-facing degrees
+  const angle = angleBase + (Math.random() * Math.PI - Math.PI / 2); 
+  const velocity = 50 + Math.random() * 400; 
+  
+  p.style.left = `${startX}vw`;
+  p.style.top = `${startY}vh`;
+  
+  const tx = Math.cos(angle) * velocity * 2.5;
+  const ty = Math.sin(angle) * velocity * 2.5 + 100; // gravity arcs it down slightly
+  
+  p.style.setProperty('--tx', tx + 'px');
+  p.style.setProperty('--ty', ty + 'px');
+  p.style.setProperty('--w', (4 + Math.random()*8) + 'px');
+  p.style.setProperty('--h', (4 + Math.random()*8) + 'px');
+  p.style.setProperty('--c', colors[Math.floor(Math.random() * colors.length)]);
+  p.style.setProperty('--rot', (Math.random() * 1440 - 720) + 'deg');
+  
+  const delay = (8.9 + Math.random() * 0.4).toFixed(2);
+  p.style.animationDelay = `${delay}s`;
+  
+  pContainer.appendChild(p);
+}
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.87.0/dist/phaser.min.js"></script>
