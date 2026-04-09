@@ -573,31 +573,31 @@ class GameScene extends Phaser.Scene {
     // The final platform sits at y = H - 180, top surface at H - 180.
     const PLAT_TOP = H - 180;
     
-    // The image assets contain deeper transparent bottom padding; offsetting by +26 pixels precisely sinks them into the grass.
-    const ITEM_Y = PLAT_TOP + 26;
+    // The image assets contain transparent bottom padding; offsetting by +12 pixels plants them slightly behind the grass tile.
+    const ITEM_Y = PLAT_TOP + 12;
     
     // Gate Placement (frame 0 = closed)
     this.endGate = this.physics.add.staticSprite(W - 120, ITEM_Y, 'gate', 0)
-      .setOrigin(0.5, 1)      // Rest exactly on the platform
-      .setScale(0.6)          // Sane scale compared to the player 
-      .setDepth(6)
+      .setOrigin(0.5, 1)
+      .setScale(0.6)
+      .setDepth(3.1)          // Place BEHIND the grass platform (which is depth 4) 
       .setFlipX(true);        // Flip so the gate swings towards the left/player
 
     // Sign Placement (to the left of the gate)
     const sign = this.add.image(W - 280, ITEM_Y, 'sign')
       .setOrigin(0.5, 1)
-      .setScale(0.18)         // Scaled up so text comfortably fits inside the board
-      .setDepth(5);
+      .setScale(0.18)
+      .setDepth(3.2);         // Place BEHIND the grass platform
       
     // Sign Text (Centered perfectly inside the physical wooden part of the board)
     this.add.text(sign.x, sign.y - 74, 'Surprise\nfor you', {
-      fontSize: '7px', 
+      fontSize: '5.5px',      // Shrank to intimately fit inside the board's bounds
       color: '#ffffff',
       align: 'center',
-      lineSpacing: 4,
+      lineSpacing: 2,
       fontFamily: '"Press Start 2P", sans-serif',
-      shadow: { blur: 0, color: '#331a05', fill: true, offsetX: 1, offsetY: 1 } // Crisp pixel shadow to stand out against wood
-    }).setOrigin(0.5, 0.5).setDepth(7);
+      shadow: { blur: 0, color: '#331a05', fill: true, offsetX: 1, offsetY: 1 } 
+    }).setOrigin(0.5, 0.5).setDepth(3.3);
 
     // Invisible trigger zone the player walks into (just in front of the gate)
     const gfx = this.add.graphics();
