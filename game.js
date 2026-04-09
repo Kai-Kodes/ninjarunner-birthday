@@ -160,6 +160,12 @@ class GameScene extends Phaser.Scene {
     } else {
       this._playAnim(p, 'idle');
     }
+    
+    // Pre-open the final gate as soon as the player steps onto the final platform
+    if (!this.gateOpened && this.endGate && p.x > 6050) {
+      this.gateOpened = true;
+      this.endGate.setFrame(1);
+    }
 
     // ── Parallax background scroll ────────────────────────────────
     // tilePositionX is in "source pixel" space, so we divide by tileScaleX
@@ -567,8 +573,8 @@ class GameScene extends Phaser.Scene {
     // The final platform sits at y = H - 180, top surface at H - 180.
     const PLAT_TOP = H - 180;
     
-    // The image assets contain transparent bottom padding; offsetting by +12 pixels plants them cleanly on the grass.
-    const ITEM_Y = PLAT_TOP + 12;
+    // The image assets contain deeper transparent bottom padding; offsetting by +26 pixels precisely sinks them into the grass.
+    const ITEM_Y = PLAT_TOP + 26;
     
     // Gate Placement (frame 0 = closed)
     this.endGate = this.physics.add.staticSprite(W - 120, ITEM_Y, 'gate', 0)
@@ -584,7 +590,7 @@ class GameScene extends Phaser.Scene {
       .setDepth(5);
       
     // Sign Text (Centered perfectly inside the physical wooden part of the board)
-    this.add.text(sign.x, sign.y - 58, 'Surprise\nfor you', {
+    this.add.text(sign.x, sign.y - 74, 'Surprise\nfor you', {
       fontSize: '7px', 
       color: '#ffffff',
       align: 'center',
