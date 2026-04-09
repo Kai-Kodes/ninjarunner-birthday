@@ -567,26 +567,31 @@ class GameScene extends Phaser.Scene {
     // The final platform sits at y = H - 180, top surface at H - 180.
     const PLAT_TOP = H - 180;
     
+    // The image assets contain transparent bottom padding; offsetting by +12 pixels plants them cleanly on the grass.
+    const ITEM_Y = PLAT_TOP + 12;
+    
     // Gate Placement (frame 0 = closed)
-    this.endGate = this.physics.add.staticSprite(W - 120, PLAT_TOP, 'gate', 0)
+    this.endGate = this.physics.add.staticSprite(W - 120, ITEM_Y, 'gate', 0)
       .setOrigin(0.5, 1)      // Rest exactly on the platform
       .setScale(0.6)          // Sane scale compared to the player 
       .setDepth(6)
       .setFlipX(true);        // Flip so the gate swings towards the left/player
 
     // Sign Placement (to the left of the gate)
-    const sign = this.add.image(W - 300, PLAT_TOP, 'sign')
+    const sign = this.add.image(W - 280, ITEM_Y, 'sign')
       .setOrigin(0.5, 1)
-      .setScale(0.12)         // Sign image is huge (532 h), scale down to ~64px
+      .setScale(0.18)         // Scaled up so text comfortably fits inside the board
       .setDepth(5);
       
-    // Sign Text
-    this.add.text(sign.x, sign.y - 72, 'Surprise for you', {
-      fontSize: '8px', 
-      color: '#fff8e8',
+    // Sign Text (Centered perfectly inside the physical wooden part of the board)
+    this.add.text(sign.x, sign.y - 58, 'Surprise\nfor you', {
+      fontSize: '7px', 
+      color: '#ffffff',
+      align: 'center',
+      lineSpacing: 4,
       fontFamily: '"Press Start 2P", sans-serif',
-      shadow: { blur: 2, color: '#000000', fill: true }
-    }).setOrigin(0.5, 1).setDepth(7);
+      shadow: { blur: 0, color: '#331a05', fill: true, offsetX: 1, offsetY: 1 } // Crisp pixel shadow to stand out against wood
+    }).setOrigin(0.5, 0.5).setDepth(7);
 
     // Invisible trigger zone the player walks into (just in front of the gate)
     const gfx = this.add.graphics();
