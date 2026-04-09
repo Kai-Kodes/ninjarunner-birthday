@@ -172,17 +172,21 @@
       white-space: nowrap;
     }
     .end-line:nth-child(1) { animation-delay: 1.2s; }
-    .end-line:nth-child(2) { animation-delay: 2.8s; }
+    .end-line:nth-child(2) { animation-delay: 2.8s; margin-bottom: 50px; }
     .end-line:nth-child(3) {
-      animation-delay: 4.4s;
-      font-size: 1.3rem;
+      animation-delay: 4.4s, 4.4s;
+      font-size: 1.8rem;
       margin-bottom: 28px;
+      text-transform: uppercase;
+      color: transparent !important;
+      -webkit-text-stroke: 2.5px #ff2a2a;
+      animation: revealLine 1.2s ease forwards, arcadeStroke 0.6s infinite step-end;
     }
 
     /* Cake gif — appears below text as its own big element */
     #end-cake {
-      width: 160px;
-      height: 160px;
+      width: 250px;
+      height: 250px;
       object-fit: contain;
       opacity: 0;
       animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 6s forwards;
@@ -373,6 +377,37 @@
     @keyframes blink-cursor {
       50% { opacity: 0; }
     }
+    @keyframes arcadeStroke {
+      0%   { -webkit-text-stroke-color: #ff2a2a; filter: drop-shadow(0 0 10px #ff2a2a); }
+      25%  { -webkit-text-stroke-color: #2aff2a; filter: drop-shadow(0 0 10px #2aff2a); }
+      50%  { -webkit-text-stroke-color: #ffea2a; filter: drop-shadow(0 0 10px #ffea2a); }
+      75%  { -webkit-text-stroke-color: #2a2aff; filter: drop-shadow(0 0 10px #2a2aff); }
+      100% { -webkit-text-stroke-color: #ff2a2a; filter: drop-shadow(0 0 10px #ff2a2a); }
+    }
+
+    #party-particles {
+      position: absolute;
+      top: 40%; left: 50%;
+      z-index: 10;
+    }
+    .party-particle {
+      position: absolute;
+      width: 8px; height: 8px;
+      background: var(--c);
+      opacity: 0;
+      border-radius: 2px;
+      pointer-events: none;
+      animation: explodeOut 2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards,
+                 fadeParticle 2s ease forwards;
+    }
+    @keyframes explodeOut {
+      0%   { transform: translate(0, 0) scale(1.5); }
+      100% { transform: translate(var(--tx), var(--ty)) scale(0); }
+    }
+    @keyframes fadeParticle {
+      0%, 70% { opacity: 1; }
+      100%    { opacity: 0; }
+    }
 
     /* nth-child(3) starts transparent — revealLine overrides to white */
     .end-line:nth-child(3) { color: rgba(255, 255, 255, 0); }
@@ -476,6 +511,7 @@
 
 <!-- ─── END SCENE OVERLAY ─── -->
 <div id="end-overlay">
+  <div id="party-particles"></div>
   <div id="end-text-container">
     <span class="end-line">You made it!</span>
     <span class="end-line">Like you always do...</span>
@@ -688,6 +724,24 @@ function bindMobileBtn(id, key) {
 bindMobileBtn('btn-left', 'left');
 bindMobileBtn('btn-right', 'right');
 bindMobileBtn('btn-jump', 'up');
+
+// ── Generate Party Particles ──────────────────────────────────
+const pContainer = document.getElementById('party-particles');
+const colors = ['#ff2a2a', '#2aff2a', '#ffea2a', '#2a2aff', '#ff00ff', '#00ffff'];
+for (let i = 0; i < 70; i++) {
+  const p = document.createElement('div');
+  p.className = 'party-particle';
+  const angle = Math.random() * Math.PI * 2;
+  const velocity = 50 + Math.random() * 300;
+  const tx = Math.cos(angle) * velocity;
+  const ty = Math.sin(angle) * velocity - 80;
+  p.style.setProperty('--tx', tx + 'px');
+  p.style.setProperty('--ty', ty + 'px');
+  p.style.setProperty('--c', colors[Math.floor(Math.random() * colors.length)]);
+  const delay = (4.4 + Math.random() * 0.15).toFixed(2);
+  p.style.animationDelay = `${delay}s, ${delay}s`;
+  pContainer.appendChild(p);
+}
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.87.0/dist/phaser.min.js"></script>
