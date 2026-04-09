@@ -396,8 +396,7 @@ class GameScene extends Phaser.Scene {
       [4760,G-340],
       [5040,G-280],[5080,G-280],
       [5320,G-350],
-      [5800,G-240],[5840,G-240],
-      [6080,G-220],[6140,G-220],[6200,G-220],
+      [5800,G-240],[5840,G-240]
     ].forEach(([x, y]) => {
       const c = this._makeCoin(x, y);
       this.coinGroup.add(c, true);
@@ -588,16 +587,6 @@ class GameScene extends Phaser.Scene {
       .setOrigin(0.5, 1)
       .setScale(0.18)
       .setDepth(3.2);         // Place BEHIND the grass platform
-      
-    // Sign Text (Centered perfectly inside the physical wooden part of the board)
-    this.add.text(sign.x, sign.y - 74, 'Surprise\nfor you', {
-      fontSize: '5.5px',      // Shrank to intimately fit inside the board's bounds
-      color: '#ffffff',
-      align: 'center',
-      lineSpacing: 2,
-      fontFamily: '"Press Start 2P", sans-serif',
-      shadow: { blur: 0, color: '#331a05', fill: true, offsetX: 1, offsetY: 1 } 
-    }).setOrigin(0.5, 0.5).setDepth(3.3);
 
     // Invisible trigger zone the player walks into (just in front of the gate)
     const gfx = this.add.graphics();
