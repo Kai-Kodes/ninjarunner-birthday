@@ -160,27 +160,52 @@
       gap: 0;
     }
 
-    /* Each text line fades+rises in sequence */
-    .end-line {
+    #moving-lines {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      /* Animates BOTH lines up together */
+      animation: linesGoUp 1s cubic-bezier(0.25, 1, 0.5, 1) 4.0s forwards;
+    }
+    @keyframes linesGoUp {
+      from { transform: translateY(0); }
+      to   { transform: translateY(-40px); }
+    }
+
+    /* Each intro text line slides from left */
+    .intro-line {
       display: block;
       font-size: 1rem;
-      color: rgba(255, 255, 255, 0);
+      color: #ffffff;
       line-height: 1.5;
       letter-spacing: 0.05em;
-      margin-bottom: 16px;
-      animation: revealLine 1.2s ease forwards;
       white-space: nowrap;
+      opacity: 0;
+      transform: translateX(-50vw);
     }
-    .end-line:nth-child(1) { animation-delay: 1.2s; }
-    .end-line:nth-child(2) { animation-delay: 2.8s; margin-bottom: 50px; }
-    .end-line:nth-child(3) {
-      animation-delay: 4.4s, 4.4s;
+    #line1 { animation: slideFromLeft 1.2s ease 1s forwards; margin-bottom: 16px; }
+    #line2 { animation: slideFromLeft 1.2s ease 2.5s forwards; margin-bottom: 50px; }
+
+    @keyframes slideFromLeft {
+      0%   { opacity: 0; transform: translateX(-50vw); }
+      70%  { opacity: 1; }
+      100% { opacity: 1; transform: translateX(0); }
+    }
+
+    #line3 {
       font-size: 1.8rem;
       margin-bottom: 28px;
       text-transform: uppercase;
       color: transparent !important;
       -webkit-text-stroke: 2.5px #c35555;
-      animation: revealLine 1.2s ease forwards, arcadeStroke 4s infinite linear;
+      opacity: 0;
+      /* Fades in slowly at T=5.0s without moving */
+      animation: slowReveal 2s ease 5.0s forwards, arcadeStroke 4s infinite linear;
+    }
+    @keyframes slowReveal {
+      from { opacity: 0; }
+      to   { opacity: 1; }
     }
 
     /* Cake gif — appears below text as its own big element */
@@ -189,7 +214,7 @@
       height: 250px;
       object-fit: contain;
       opacity: 0;
-      animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 6s forwards;
+      animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 7.5s forwards;
       margin-bottom: 36px;
     }
 
@@ -206,7 +231,8 @@
       text-transform: uppercase;
       cursor: pointer;
       opacity: 0;
-      animation: fadeIn 0.8s ease 7s forwards;
+      /* Appears at T=9.0s */
+      animation: fadeIn 0.8s ease 9.0s forwards;
       transition: all 0.3s ease;
     }
     #open-letter-btn:hover {
@@ -387,26 +413,25 @@
 
     #party-particles {
       position: absolute;
-      top: 40%; left: 50%;
+      inset: 0;
       z-index: 10;
+      overflow: hidden;
+      pointer-events: none;
     }
     .party-particle {
       position: absolute;
-      width: 8px; height: 8px;
+      width: var(--w); height: var(--h);
       background: var(--c);
       opacity: 0;
       border-radius: 2px;
       pointer-events: none;
-      animation: explodeOut 2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards,
-                 fadeParticle 2s ease forwards;
+      /* 4.0s animation duration; with a delay up to 5.0s, ends tightly at T=9.0s */
+      animation: popperFlight 4.0s cubic-bezier(0.15, 1, 0.4, 1) forwards;
     }
-    @keyframes explodeOut {
-      0%   { transform: translate(0, 0) scale(1.5); }
-      100% { transform: translate(var(--tx), var(--ty)) scale(0); }
-    }
-    @keyframes fadeParticle {
-      0%, 70% { opacity: 1; }
-      100%    { opacity: 0; }
+    @keyframes popperFlight {
+      0%   { opacity: 1; transform: translate(0, 0) scale(0.5) rotate(0deg); }
+      70%  { opacity: 1; }
+      100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(1.5) rotate(var(--rot)); }
     }
 
     /* nth-child(3) starts transparent — revealLine overrides to white */
@@ -513,9 +538,11 @@
 <div id="end-overlay">
   <div id="party-particles"></div>
   <div id="end-text-container">
-    <span class="end-line">You made it!</span>
-    <span class="end-line">Like you always do...</span>
-    <span class="end-line">Happy Birthday</span>
+    <div id="moving-lines">
+      <span class="intro-line" id="line1">You made it!</span>
+      <span class="intro-line" id="line2">Like you always do...</span>
+    </div>
+    <span id="line3">HAPPY BIRTHDAY</span>
   </div>
   <!-- Cake gif appears below text as a big separate element -->
   <img id="end-cake" src="backs/cake.gif" alt="🎂">
@@ -728,20 +755,40 @@ bindMobileBtn('btn-jump', 'up');
 // ── Generate Party Particles ──────────────────────────────────
 const pContainer = document.getElementById('party-particles');
 const colors = ['#ff2a2a', '#2aff2a', '#ffea2a', '#2a2aff', '#ff00ff', '#00ffff'];
-for (let i = 0; i < 70; i++) {
-  const p = document.createElement('div');
-  p.className = 'party-particle';
-  const angle = Math.random() * Math.PI * 2;
-  const velocity = 50 + Math.random() * 300;
-  const tx = Math.cos(angle) * velocity;
-  const ty = Math.sin(angle) * velocity - 80;
-  p.style.setProperty('--tx', tx + 'px');
-  p.style.setProperty('--ty', ty + 'px');
-  p.style.setProperty('--c', colors[Math.floor(Math.random() * colors.length)]);
-  const delay = (4.4 + Math.random() * 0.15).toFixed(2);
-  p.style.animationDelay = `${delay}s, ${delay}s`;
-  pContainer.appendChild(p);
-}
+
+// 5 explosion centers across the screen breadth
+const bursts = [
+  { x: 10, y: 100 }, { x: 30, y: 100 }, { x: 50, y: 100 }, { x: 70, y: 100 }, { x: 90, y: 100 }
+];
+
+bursts.forEach((burst) => {
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'party-particle';
+    const angle = (Math.random() * 180) * (Math.PI / 180) + Math.PI; 
+    const velocity = 80 + Math.random() * 250;
+    
+    p.style.left = `calc(${burst.x}vw + ${(Math.random()*40-20)}px)`;
+    p.style.top = burst.y + 'vh';
+    
+    // Create organic parabolic outward burst matching 16bit style
+    const tx = Math.cos(angle) * velocity * 2.5;
+    const ty = Math.sin(angle) * velocity * 2.5 + 400; // gravity drops it downward
+    
+    p.style.setProperty('--tx', tx + 'px');
+    p.style.setProperty('--ty', ty + 'px');
+    p.style.setProperty('--w', (4 + Math.random()*6) + 'px');
+    p.style.setProperty('--h', (4 + Math.random()*6) + 'px');
+    p.style.setProperty('--c', colors[Math.floor(Math.random() * colors.length)]);
+    p.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
+    
+    // Starts exactly as HAPPY BIRTHDAY transitions in
+    const delay = (5.0 + Math.random() * 0.2).toFixed(2);
+    p.style.animationDelay = `${delay}s`;
+    
+    pContainer.appendChild(p);
+  }
+});
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.87.0/dist/phaser.min.js"></script>
