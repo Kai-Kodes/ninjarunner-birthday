@@ -585,7 +585,7 @@ class GameScene extends Phaser.Scene {
     // Sign Placement (to the left of the gate)
     const sign = this.add.image(W - 280, ITEM_Y, 'sign')
       .setOrigin(0.5, 1)
-      .setScale(0.18)
+      .setScale(0.26)
       .setDepth(3.2);         // Place BEHIND the grass platform
 
     // Invisible trigger zone the player walks into (just in front of the gate)
