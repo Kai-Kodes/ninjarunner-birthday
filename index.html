@@ -494,6 +494,73 @@
       border-color: rgba(255, 255, 255, 0.6);
       color: #fff;
     }
+    /* ─── MOBILE LANDSCAPE RESPONSIVE (ending screen) ─── */
+    @media screen and (max-height: 500px) {
+      /* End overlay text */
+      .intro-line {
+        font-size: 0.7rem;
+        margin-bottom: 8px !important;
+      }
+      #line2 { margin-bottom: 20px !important; }
+
+      #moving-lines {
+        animation: linesGoUp 1s cubic-bezier(0.25, 1, 0.5, 1) 8.0s forwards;
+      }
+      @keyframes linesGoUp {
+        from { transform: translateY(0); }
+        to   { transform: translateY(-20px); }
+      }
+
+      #line3 {
+        font-size: 1rem;
+        -webkit-text-stroke: 1.8px #c35555;
+        margin-bottom: 12px;
+      }
+
+      #end-cake {
+        width: 100px;
+        height: 100px;
+        margin-bottom: 12px;
+      }
+
+      #open-letter-btn {
+        padding: 8px 24px;
+        font-size: 0.35rem;
+      }
+
+      /* Letter popup */
+      #letter-popup {
+        width: 96vw;
+        height: 90vh;
+      }
+
+      #letter-scroll-content {
+        inset: 10% 10% 8%;
+        gap: 6px;
+      }
+
+      .letter-title {
+        font-size: 0.4rem;
+        margin-bottom: 6px;
+      }
+
+      .letter-body {
+        font-size: 0.38rem;
+        line-height: 1.8;
+        margin-bottom: 6px;
+      }
+
+      .letter-sign {
+        font-size: 0.35rem;
+        margin-top: 4px;
+        margin-bottom: 4px;
+      }
+
+      #replay-btn {
+        padding: 6px 18px;
+        font-size: 0.35rem;
+      }
+    }
   </style>
 </head>
 <body>
